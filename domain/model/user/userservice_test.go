@@ -21,13 +21,26 @@ func Test_Exists(t *testing.T) {
 
 	userId, _ := NewUserId("userId")
 	userName, _ := NewUserName("userName")
-	user, _ := NewUser(*userId, *userName)
+	t.Run("exists", func(t *testing.T) {
+		user, _ := NewUser(*userId, *userName)
 
-	isExists, err := userService.Exists(user)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !isExists {
-		t.Errorf("isExists must be %v but %v", isExists, isExists)
-	}
+		isExists, err := userService.Exists(user)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !isExists {
+			t.Errorf("isExists must be true but false")
+		}
+	})
+	t.Run("not exists", func(t *testing.T) {
+		otherUserName, _ := NewUserName("otherUserName")
+		user, _ := NewUser(*userId, *otherUserName)
+		isExists, err := userService.Exists(user)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if isExists {
+			t.Errorf("isExists must be false but true")
+		}
+	})
 }
