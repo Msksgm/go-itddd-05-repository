@@ -21,19 +21,45 @@ func Test_FindByUserName(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	mock.ExpectBegin()
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, name FROM users WHERE name = $1`)).
-		WithArgs("userName").
-		WillReturnRows(mock.NewRows([]string{"userId", "userName"}).AddRow("userId", "userName"))
-	mock.ExpectCommit()
 
-	got, err := userRepository.FindByUserName(userName)
-	if err != nil {
-		t.Error(err)
-	}
-	want := &User{id: *userId, name: *userName}
+	t.Run("found", func(t *testing.T) {
+		mock.ExpectBegin()
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, name FROM users WHERE name = $1`)).
+			WithArgs("userName").
+			WillReturnRows(mock.NewRows([]string{"userId", "userName"}).AddRow("userId", "userName"))
+		mock.ExpectCommit()
 
-	if diff := cmp.Diff(want, got, cmp.AllowUnexported(User{}, UserName{}, UserId{})); diff != "" {
-		t.Errorf("mismatch (-want, +got):\n%s", diff)
-	}
+		got, err := userRepository.FindByUserName(userName)
+		if err != nil {
+			t.Error(err)
+		}
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Errorf("there were unfulfilled expectations: %s", err)
+		}
+
+		want := &User{id: *userId, name: *userName}
+		if diff := cmp.Diff(want, got, cmp.AllowUnexported(User{}, UserName{}, UserId{})); diff != "" {
+			t.Errorf("mismatch (-want, +got):\n%s", diff)
+		}
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		mock.ExpectBegin()
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, name FROM users WHERE name = $1`)).
+			WithArgs("userName").
+			WillReturnRows(mock.NewRows([]string{}))
+		mock.ExpectCommit()
+
+		got, err := userRepository.FindByUserName(userName)
+		if err != nil {
+			t.Error(err)
+		}
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Errorf("there were unfulfilled expectations: %s", err)
+		}
+
+		if got != nil {
+			t.Errorf("want: nil, got: %v", got)
+		}
+	})
 }
