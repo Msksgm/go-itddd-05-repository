@@ -21,7 +21,7 @@ func main() {
 	}
 	log.Println("successfully connected to database")
 
-	err = CreateUser(db, "userName", "userId")
+	err = CreateUser(db, "test-user", "test-user-id")
 	if err != nil {
 		log.Println(err)
 	}
@@ -68,7 +68,7 @@ func CreateUser(db *sql.DB, name string, id string) (err error) {
 	if err := userRepository.Save(newUser); err != nil {
 		return err
 	}
-
+	log.Println("test-user is successfully added in users table")
 	return nil
 }
 
