@@ -1,6 +1,8 @@
 package user
 
 import (
+	"errors"
+	"reflect"
 	"regexp"
 	"testing"
 
@@ -79,17 +81,35 @@ func Test_Save(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	mock.ExpectBegin()
-	mock.ExpectExec("INSERT INTO users").
-		WithArgs("userId", "userName").
-		WillReturnResult(sqlmock.NewResult(1, 1))
-	mock.ExpectCommit()
+	t.Run("success", func(t *testing.T) {
+		mock.ExpectBegin()
+		mock.ExpectExec("INSERT INTO users").
+			WithArgs("userId", "userName").
+			WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectCommit()
 
-	got := userRepository.Save(user)
-	if got != nil {
-		t.Errorf("got must be nil, but %v", got)
-	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expectations: %s", err)
-	}
+		got := userRepository.Save(user)
+		if got != nil {
+			t.Errorf("got must be nil, but %v", got)
+		}
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Errorf("there were unfulfilled expectations: %s", err)
+		}
+	})
+	t.Run("fail", func(t *testing.T) {
+		var saveQueryRowError *SaveQueryRowError
+		mock.ExpectBegin()
+		mock.ExpectExec("INSERT INTO users").
+			WithArgs("userId", "userName").
+			WillReturnError(saveQueryRowError)
+		mock.ExpectRollback()
+
+		got := userRepository.Save(user)
+		if !errors.As(got, &saveQueryRowError) {
+			t.Errorf("err type: %v, expect err type: %v", reflect.TypeOf(err), reflect.TypeOf(saveQueryRowError))
+		}
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Errorf("there were unfulfilled expectations: %s", err)
+		}
+	})
 }

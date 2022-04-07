@@ -82,18 +82,17 @@ func (ur *UserRepository) Save(user *User) (err error) {
 		}
 	}()
 
-	var userId UserId
 	_, err = tx.Exec("INSERT INTO users(id, name) VALUES ($1, $2)", user.id.value, user.name.value)
 	if err != nil {
-		return &SaveQueryRowError{UserId: userId, Message: fmt.Sprintf("userrepository.Save err: %s", err), Err: err}
+		return &SaveQueryRowError{UserName: user.name, Message: fmt.Sprintf("userrepository.Save err: %s", err), Err: err}
 	}
 	return nil
 }
 
 type SaveQueryRowError struct {
-	UserId  UserId
-	Message string
-	Err     error
+	UserName UserName
+	Message  string
+	Err      error
 }
 
 func (err *SaveQueryRowError) Error() string {
