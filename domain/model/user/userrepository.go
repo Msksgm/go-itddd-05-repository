@@ -9,7 +9,7 @@ import (
 
 type UserRepositorier interface {
 	FindByUserName(name *UserName) (*User, error)
-	// Save(user *User) error
+	Save(user *User) error
 }
 
 type UserRepository struct {
@@ -65,5 +65,37 @@ type FindByUserNameQueryError struct {
 }
 
 func (err *FindByUserNameQueryError) Error() string {
+	return err.Message
+}
+
+func (ur *UserRepository) Save(user *User) (err error) {
+	tx, err := ur.db.Begin()
+	if err != nil {
+		return
+	}
+	defer func() {
+		switch err {
+		case nil:
+			err = tx.Commit()
+		default:
+			tx.Rollback()
+		}
+	}()
+
+	var userId UserId
+	_, err = tx.Exec("INSERT INTO users(id, name) VALUES ($1, $2)", user.id.value, user.name.value)
+	if err != nil {
+		return &SaveQueryRowError{UserId: userId, Message: fmt.Sprintf("userrepository.Save err: %s", err), Err: err}
+	}
+	return nil
+}
+
+type SaveQueryRowError struct {
+	UserId  UserId
+	Message string
+	Err     error
+}
+
+func (err *SaveQueryRowError) Error() string {
 	return err.Message
 }

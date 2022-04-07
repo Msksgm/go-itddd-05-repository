@@ -63,3 +63,33 @@ func Test_FindByUserName(t *testing.T) {
 		}
 	})
 }
+
+func Test_Save(t *testing.T) {
+	userName, _ := NewUserName("userName")
+	userId, _ := NewUserId("userId")
+	user, _ := NewUser(*userId, *userName)
+
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%v' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+	userRepository, err := NewUserRepository(db)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	mock.ExpectBegin()
+	mock.ExpectExec("INSERT INTO users").
+		WithArgs("userId", "userName").
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectCommit()
+
+	got := userRepository.Save(user)
+	if got != nil {
+		t.Errorf("got must be nil, but %v", got)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}

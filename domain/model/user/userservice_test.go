@@ -1,6 +1,9 @@
 package user
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 type UserRepositorierStub struct{}
 
@@ -14,6 +17,10 @@ func (us *UserRepositorierStub) FindByUserName(name *UserName) (*User, error) {
 	}
 
 	return user, nil
+}
+
+func (us *UserRepositorierStub) Save(user *User) error {
+	return fmt.Errorf("not implemented err")
 }
 
 func Test_Exists(t *testing.T) {
